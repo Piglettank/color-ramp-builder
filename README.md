@@ -39,16 +39,16 @@ This section documents choices made while building the tool, so the next person 
 
 ### Why this project exists
 
-The tool was built to solve a practical problem when defining Flutter theme colors: you have a single brand hex (e.g. `#04567D`) and need a full tonal ramp for `MaterialColor`, but a pre-made palette may not contain your exact color at any step. This app lets you:
+The tool was built to solve a practical problem when defining Flutter theme colors: you have a single brand hex and need a full tonal ramp for `MaterialColor`, but a pre-made palette may not contain your exact color at any step. This app lets you:
 
 1. Generate a ramp from your color using Material's algorithm
 2. See which discrete swatch your color is closest to
 3. Lock your exact hex to that swatch and regenerate the rest
-4. Copy the result into Dart (e.g. `color_tokens.dart`)
+4. Copy the result into your Dart theme file
 
-### Standalone repo, not inside invoicery-flutter
+### Standalone tool
 
-The app lives in `~/Code/color-ramp-builder` as its own project. It is intentionally **not** part of the Flutter monorepo — no shared code, no automatic sync to theme files. Export is copy-paste only.
+Export is copy-paste only — there is no automatic sync to theme files or project repos.
 
 ### Scope: primary ramp only
 
@@ -126,12 +126,10 @@ Export produces a `const MaterialColor` block:
 
 The export is plain text for manual paste — it does not validate against or update any Flutter project.
 
-### Reference case: `#04567D`
+### Reference case
 
-When testing, this brand blue is a useful sanity check:
+When testing with a mid-tone brand color, a useful sanity check:
 
-- Virtual step is typically around **380–400**
-- Nearest base swatch is usually **400**
-- After locking to 400, that row is exactly `#04567D` and surrounding steps shift
-
-This case came from defining `PRIMARY` in invoicery-flutter's `color_tokens.dart`, where a hand-picked ramp did not include the original brand hex at any step.
+- Virtual step is typically close to a base swatch (e.g. **380–400**)
+- The nearest base swatch is shown in the UI (e.g. **400**)
+- After locking, that row uses your exact input hex and surrounding steps shift

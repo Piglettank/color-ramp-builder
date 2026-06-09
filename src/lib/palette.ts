@@ -11,7 +11,6 @@ export const DEFAULT_SEED_HEX = '#76889A'
 
 export interface Swatch {
   step: number
-  tone: number
   hex: string
 }
 
@@ -49,10 +48,10 @@ export function generateFromSeed(inputHex: string, steps: number[]): Swatch[] {
   const normalized = normalizeHex(inputHex)
   const palette = TonalPalette.fromInt(argbFromHex(normalized))
 
-  return steps.map((step) => {
-    const tone = stepToTone(step)
-    return { step, tone, hex: toneToHex(palette, tone) }
-  })
+  return steps.map((step) => ({
+    step,
+    hex: toneToHex(palette, stepToTone(step)),
+  }))
 }
 
 export function generateFromLock(
@@ -70,7 +69,7 @@ export function generateFromLock(
       step === lockedStep
         ? normalized
         : hexFromHct(hct.hue, hct.chroma, nominalTone + toneOffset)
-    return { step, tone: nominalTone, hex }
+    return { step, hex }
   })
 }
 

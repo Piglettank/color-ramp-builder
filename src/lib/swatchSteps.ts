@@ -1,7 +1,7 @@
-export const BASE_STEPS = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
+const BASE_STEPS = [100, 200, 300, 400, 500, 600, 700, 800, 900] as const
 
-export const DARK_EXTENSION_STEPS = [50] as const
-export const LIGHT_EXTENSION_STEPS = [950, 980] as const
+const DARK_EXTENSION_STEPS = [50] as const
+const LIGHT_EXTENSION_STEPS = [950, 980] as const
 
 export interface ExtensionToggles {
   enabled: boolean

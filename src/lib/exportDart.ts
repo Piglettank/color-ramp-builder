@@ -33,7 +33,7 @@ function stepToConstantSuffix(step: number): string {
   return String(step / 10).padStart(2, '0')
 }
 
-export function exportMaterialColor(
+function exportMaterialColor(
   swatches: Swatch[],
   constantName: string,
   primaryHex: string,
@@ -52,7 +52,7 @@ ${entries}
 );`
 }
 
-export function exportColorConstants(
+function exportColorConstants(
   swatches: Swatch[],
   constantName: string,
   seedStep: number | null,
