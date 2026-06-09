@@ -34,6 +34,7 @@ const customSteps = ref<number[]>([])
 
 const HISTORY_DEBOUNCE_MS = 500
 let historyRecordTimeout: ReturnType<typeof setTimeout> | null = null
+let skipHistoryRecord = false
 
 const activeSteps = computed(() => getActiveSteps(extensions.value, customSteps.value))
 
@@ -111,16 +112,15 @@ function regenerate(options: { recordHistory?: boolean } = {}) {
 
 function selectHistoryEntry(entry: HistoryEntry) {
   clearHistoryRecordTimeout()
-  inputHex.value = entry.hex
+  skipHistoryRecord = true
   if (entry.lockedStep !== null) {
     lockedStep.value = entry.lockedStep
     lockedHex.value = normalizeHex(entry.hex)
-    regenerate({ recordHistory: false })
-    return
+  } else {
+    lockedStep.value = null
+    lockedHex.value = null
   }
-  lockedStep.value = null
-  lockedHex.value = null
-  regenerate({ recordHistory: false })
+  inputHex.value = entry.hex
 }
 
 function lockToClosest() {
@@ -169,12 +169,24 @@ async function copyHex(hex: string) {
 }
 
 watch(extensions, () => {
+  if (isLocked.value) {
+    lockedStep.value = null
+    lockedHex.value = null
+  }
   regenerate()
 }, { deep: true })
 
 watch(inputHex, () => {
-  if (isLocked.value) return
-  regenerate()
+  if (isLocked.value && lockedHex.value !== null) {
+    const colorChanged =
+      !isValidHex(inputHex.value) || normalizeHex(inputHex.value) !== lockedHex.value
+    if (colorChanged) {
+      lockedStep.value = null
+      lockedHex.value = null
+    }
+  }
+  regenerate({ recordHistory: !skipHistoryRecord })
+  skipHistoryRecord = false
 })
 
 onUnmounted(clearHistoryRecordTimeout)
