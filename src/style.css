@@ -4,8 +4,8 @@
   --surface: #ffffff;
   --surface-muted: #f4f4f5;
   --border: #e4e4e7;
-  --accent: #76889a;
-  --locked: #7c3aed;
+  --accent: #4a74b8;
+  --locked: var(--accent);
   --error: #dc2626;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.5;

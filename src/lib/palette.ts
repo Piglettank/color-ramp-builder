@@ -7,7 +7,7 @@ import {
 import { normalizeHex } from './colorDistance'
 import { stepToTone } from './swatchSteps'
 
-export const DEFAULT_SEED_HEX = '#76889A'
+export const DEFAULT_SEED_HEX = '#4A8F5C'
 
 export interface Swatch {
   step: number

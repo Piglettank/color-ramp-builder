@@ -419,9 +419,9 @@ regenerate()
 }
 
 .actions__toggle--locked {
-  border-color: var(--border);
-  background: var(--surface);
-  color: var(--text);
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  color: var(--accent);
 }
 
 .actions__toggle:disabled {
