@@ -1,23 +1,43 @@
 # Color Ramp Builder
 
-Generate a Material Design tonal ramp from a seed color using the same HCT engine as [Material Theme Builder](https://material-foundation.github.io/material-theme-builder/). Find where your brand color sits on the scale, lock it to a swatch, and export Flutter `MaterialColor` code.
+You have one brand color. You need a full palette of lighter and darker shades for your app. This tool builds that palette using the same color engine as Google's [Material Theme Builder](https://material-foundation.github.io/material-theme-builder/), shows you where your color lands on the scale, and lets you copy Flutter-ready code.
 
-## Features
+## What you can do
 
-- Enter a seed hex color and generate a primary tonal ramp (0–900, step 100)
-- Optionally include extended swatches (20, 50, 950, 980) via a single checkbox
-- Show where your color falls on the scale vs the nearest swatch, e.g. `Closest 388 (400)`
-- Lock your exact color to the nearest swatch and regenerate lighter/darker steps
-- Export a Flutter `MaterialColor` snippet with copy button
+1. **Pick a seed color** — type a hex or use the color picker.
+2. **See the ramp** — get steps from 100 to 900 (plus optional 50, 950, 980).
+3. **Find your spot** — the app marks which swatch your color is closest to, e.g. "Closest 388 (400)".
+4. **Lock your exact shade** — pin your hex to a swatch so the rest of the ramp is built around it.
+5. **Export** — copy a `MaterialColor` block or individual `Color` constants into your Flutter theme.
 
-## Setup
+You can also add custom steps (like 350) and browse recent palettes in the history panel.
+
+## Quick start
 
 ```bash
 npm install
 npm run dev
 ```
 
-Open the URL shown in the terminal (default `http://localhost:5173`).
+Open the URL in your terminal (usually `http://localhost:5173`).
+
+## Using the app
+
+**Enter your color** in the seed field. The swatch grid updates immediately.
+
+**Check the closest swatch** — a badge on the nearest row tells you where your color sits. If it says `Closest 388 (400)`, your color is between steps 400 and 500, closer to 400.
+
+**Lock if you need your exact hex on the ramp** — click "Lock to …" to pin your color to that swatch. The other steps regenerate around it. Click "Unlock" to go back to seed-based generation.
+
+**Toggle extensions** if you want the extra dark and light steps (50, 950, 980).
+
+**Export** — choose MaterialColor or separate constants, name your variable (default `PRIMARY`), and copy the Dart code.
+
+## How it works
+
+The app uses Material's HCT color space to keep hues stable as shades get lighter or darker — not simple RGB fade-to-white. When you lock a swatch, your exact hex is preserved at that step and the rest of the ramp adjusts around it.
+
+For the full technical breakdown — tone mapping, virtual step matching, lock behavior, export formats — see [How it works](docs/how-it-works.md).
 
 ## Build
 
@@ -25,111 +45,3 @@ Open the URL shown in the terminal (default `http://localhost:5173`).
 npm run build
 npm run preview
 ```
-
-## Stack
-
-- Vue 3 + Vite + TypeScript
-- [@material/material-color-utilities](https://www.npmjs.com/package/@material/material-color-utilities)
-
----
-
-## Design decisions
-
-This section documents choices made while building the tool, so the next person understands *why* it works the way it does.
-
-### Why this project exists
-
-The tool was built to solve a practical problem when defining Flutter theme colors: you have a single brand hex and need a full tonal ramp for `MaterialColor`, but a pre-made palette may not contain your exact color at any step. This app lets you:
-
-1. Generate a ramp from your color using Material's algorithm
-2. See which discrete swatch your color is closest to
-3. Lock your exact hex to that swatch and regenerate the rest
-4. Copy the result into your Dart theme file
-
-### Standalone tool
-
-Export is copy-paste only — there is no automatic sync to theme files or project repos.
-
-### Scope: primary ramp only
-
-We generate **one tonal palette at a time** (primary). Out of scope for now:
-
-- Full Material Theme Builder scheme (secondary, tertiary, neutral, error)
-- Direct write-back to Flutter repos
-- Per-swatch manual editing
-
-### Color generation: HCT via Material Color Utilities
-
-Ramps are generated with `TonalPalette` from `@material/material-color-utilities` — the same HCT (hue, chroma, tone) engine used by Material Theme Builder.
-
-| Phase | API | Behavior |
-|-------|-----|----------|
-| Initial | `TonalPalette.fromInt(seedArgb)` | Seed color defines hue/chroma; each step gets a tone from the palette |
-| After lock | `TonalPalette.fromHueAndChroma(hue, chroma)` | Rebuild ramp from locked color's hue/chroma |
-| Locked swatch | Hard override | The locked step always uses your **exact** input hex, even if HCT would produce a slightly different value at that tone |
-
-We did **not** use RGB interpolation toward white/black (the older MaterialColor swatch trick) because it drifts hue on lighter/darker steps. HCT keeps hue stable across the ramp.
-
-We also did **not** use `ColorScheme.fromSeed()` — that produces a full theme but does not guarantee your seed appears at any named swatch step.
-
-### Swatch labels and HCT tone mapping
-
-Swatch labels follow a 0–900 scale in steps of 100, plus optional extensions:
-
-| Label | HCT tone | Notes |
-|-------|----------|-------|
-| 0 | 0 | Darkest |
-| 100 | 10 | |
-| … | … | `tone = label / 10` |
-| 900 | 90 | |
-| 20, 50 | 2, 5 | Dark extensions (optional) |
-| 950, 980 | 95, 98 | Light extensions (optional) |
-
-**List order** when extensions are enabled (sorted dark → light by step label):
-
-`0 → 20 → 50 → 100 → … → 900 → 950 → 980`
-
-Step 0 is darker than 20 and 50 (tone 0 vs 2 vs 5), so it always comes first. Light extensions come after 900. All four extensions are toggled by a **single checkbox** — we assumed they are always wanted together.
-
-### Closest swatch: virtual step, not Delta E
-
-Early versions compared swatches using CIE76 Delta E (perceptual color distance). That was dropped because ΔE is hard to interpret in UI.
-
-Instead we use the **virtual step** — where your input color naturally sits on the 0–900 scale:
-
-```
-virtualStep = round(Hct.fromInt(input).tone × 10)
-```
-
-The **nearest discrete swatch** is the active step with the smallest `|step - virtualStep|`.
-
-Display format:
-
-- `Closest 388 (400)` — your color sits around **388** on the scale; nearest swatch is **400**
-- `Closest 400` — exact alignment (virtual step equals swatch step)
-
-The lock button always shows the discrete swatch number (`Lock to 400`), since that is what gets pinned.
-
-### Lock / unlock behavior
-
-- **Lock** saves your exact input hex and the nearest swatch step, then regenerates all other steps from the locked color's hue/chroma.
-- **Unlock** returns to seed-based generation (`TonalPalette.fromInt`).
-- Changing the seed color or toggling extensions **auto-unlocks** — simpler than prompting, and avoids stale locked state.
-
-### Flutter export
-
-Export produces a `const MaterialColor` block:
-
-- First argument (primary value) = locked hex if locked, otherwise the current seed hex
-- Map keys = only the active swatch steps (base + extensions if enabled)
-- Constant name is editable in the UI (default `PRIMARY`); must be a valid Dart identifier (`PRIMARY`, `BRAND_BLUE`, etc.)
-
-The export is plain text for manual paste — it does not validate against or update any Flutter project.
-
-### Reference case
-
-When testing with a mid-tone brand color, a useful sanity check:
-
-- Virtual step is typically close to a base swatch (e.g. **380–400**)
-- The nearest base swatch is shown in the UI (e.g. **400**)
-- After locking, that row uses your exact input hex and surrounding steps shift
